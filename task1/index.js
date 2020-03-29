@@ -1,7 +1,11 @@
 const { program } = require('commander');
+const fs = require('fs');
+const readerStream = fs.createReadStream('input.txt');
+const writerStream = fs.createWriteStream('output.txt', { flags: 'a' });
+const { pipeline } = require('stream');
+const CaesarCipherDecoder = require('./caesarCipherDecoder');
 
 let SHIFT_VALUE = null;
-const NUMBER_OF_LETTERS_IN_ALPHABET = 26;
 let isInputFile = false;
 let isOutputFile = false;
 const ENCODE_MODE = 'encode';
@@ -11,127 +15,81 @@ let mode = '';
 program.storeOptionsAsProperties(false).passCommandToAction(false);
 
 program
+  .requiredOption('-a, --action <action>', 'an action encode/decode')
   .requiredOption('-s, --shift <num>', 'a shift')
   .option('-i, --input <filename>', 'an input file')
   .option('-o, --output <filename>', 'an output file')
-  .option('-a, --action <action>', 'an action encode/decode')
   .action(options => {
     if (options.shift) {
+      if (
+        typeof +options.shift !== 'number' ||
+        +options.shift !== +options.shift
+      ) {
+        process.stderr.write(
+          'error: argument of shift option should be a number'
+        );
+        process.exit();
+      }
       SHIFT_VALUE = +options.shift;
     }
 
-    options.output ? (isOutputFile = true) : (isOutputFile = false);
     if (options.action) {
+      if (options.action !== ENCODE_MODE && options.action !== DECODE_MODE) {
+        process.stderr.write(
+          "error: argument of action option should be only 'encode' or 'decode'"
+        );
+        process.exit();
+      }
+
       console.log(`mode: ${options.action}`);
       mode = options.action === ENCODE_MODE ? ENCODE_MODE : DECODE_MODE;
     } else {
       process.on('exit', code => console.log(`Exit code: ${code}`));
       process.stderr.write('Caught Exception. Err: ');
-      // process.exit();
+      process.exit();
     }
 
     if (options.input) {
+      const path = options.input;
+
+      fs.access(path, fs.F_OK, err => {
+        if (err) {
+          process.on('exit', code => console.log(`Exit code: ${code}`));
+          process.stderr.write('error: input file is does not exist. ');
+          process.exit(1);
+        }
+      });
+
       isInputFile = true;
     } else {
       isInputFile = false;
       console.log('- write input message and press Enter: ');
     }
 
-    if (options.input) {
-      console.log(options.input.slice(2));
+    if (options.output) {
+      const path = options.output;
+
+      fs.access(path, fs.F_OK, err => {
+        if (err) {
+          process.on('exit', code => console.log(`Exit code: ${code}`));
+          process.stderr.write('error: output file is does not exist. ');
+          process.exit(1);
+        }
+      });
+
+      isOutputFile = true;
+    } else {
+      isOutputFile = false;
     }
   });
 
 program.parse(process.argv);
-
-const fs = require('fs');
-const readerStream = fs.createReadStream('input.txt');
-const writerStream = fs.createWriteStream('output.txt');
-
-const { pipeline, Transform } = require('stream');
-const { StringDecoder } = require('string_decoder');
-
-// Handle the raw output from standard input
-// (characters, not lines, as is the default).
-// process.stdin.setRawMode(true);
-// process.stdin.resume();
-
 process.stdin.setEncoding('utf8');
-
-// process.stdin.on('readable', () => {
-//   let chunk;
-//   // Use a loop to make sure we read all available data.
-//   while ((chunk = process.stdin.read()) !== null) {
-//     process.stdout.write(`input data: ${chunk}`);
-//   }
-// });
 
 process.stdin.on('end', () => {
   process.stdout.write('output: ');
   process.stdout.write('end');
 });
-
-class CaesarCipherDecoder extends Transform {
-  constructor(options) {
-    super(options);
-    this._decoder = new StringDecoder('utf-8');
-  }
-
-  decode(item, plain) {
-    const indexInPlain = plain.indexOf(item);
-
-    if (mode === ENCODE_MODE) {
-      if (indexInPlain + SHIFT_VALUE < NUMBER_OF_LETTERS_IN_ALPHABET) {
-        item = plain[indexInPlain + SHIFT_VALUE];
-      } else {
-        item =
-          plain[indexInPlain + SHIFT_VALUE - NUMBER_OF_LETTERS_IN_ALPHABET];
-      }
-    }
-
-    if (mode === DECODE_MODE) {
-      if (indexInPlain - SHIFT_VALUE >= 0) {
-        item = plain[indexInPlain - SHIFT_VALUE];
-      } else {
-        item =
-          plain[indexInPlain - SHIFT_VALUE + NUMBER_OF_LETTERS_IN_ALPHABET];
-      }
-    }
-    return item;
-  }
-
-  _transform(chunk, encoding, callback) {
-    const plain = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    if (encoding === 'buffer') {
-      chunk = this._decoder.write(chunk);
-    }
-
-    // Exit on CTRL + C.
-    if (chunk === '\u0003') {
-      // process.exit();
-    }
-
-    if (chunk) {
-      chunk = chunk
-        .split('')
-        .map(n => {
-          if (/[A-Z]/.test(n)) {
-            n = this.decode(n, plain);
-          }
-
-          if (/[a-z]/.test(n)) {
-            n = this.decode(n, plain.toLowerCase());
-          }
-
-          return n;
-        })
-        .join('');
-    }
-
-    callback(null, chunk);
-  }
-}
 
 pipeline(
   isInputFile ? readerStream : process.stdin,
@@ -145,3 +103,6 @@ pipeline(
     }
   }
 );
+
+module.exports.mode = mode;
+module.exports.SHIFT_VALUE = SHIFT_VALUE;

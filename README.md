@@ -1,14 +1,13 @@
-# RS School REST service
-
-## Prerequisites
-
-- Git - [Download & Install Git](https://git-scm.com/downloads).
-- Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager.
-
 ## Downloading
 
 ```
-git clone {repository URL}
+git clone https://github.com/vsoika/nodejs-course.git
+```
+
+## Go to task folder  
+
+```
+cd nodejs-course/task1
 ```
 
 ## Installing NPM modules
@@ -16,45 +15,21 @@ git clone {repository URL}
 ```
 npm install
 ```
+**Details:**
 
-## Running application
+CLI tool accepts 4 options (short alias and full name):
 
-```
-npm start
-```
+1.  **-s, --shift**: a shift
+2.  **-i, --input**: an input file
+3.  **-o, --output**: an output file
+4.  **-a, --action**: an action encode/decode
 
-After starting the app on port (4000 as default) you can open
-in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
-For more information about OpenAPI/Swagger please visit https://swagger.io/.
+## Running application example:
 
-## Testing
-
-After application running open new terminal and enter:
-
-To test without authorization
-
-```
-npm test
+```bash
+$ node index -a encode -s 7 -i input.txt -o output.txt
 ```
 
-To test with authorization
-
+```bash
+$ node index --action decode --shift 7 --input input.txt --output output.txt
 ```
-npm run test:auth
-```
-
-## Development
-
-If you're using VSCode, you can get a better developer experience from integration with [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extensions.
-
-### Auto-fix and format
-
-```
-npm run lint
-```
-
-### Debugging in VSCode
-
-Press <kbd>F5</kbd> to debug.
-
-For more information, visit: https://code.visualstudio.com/docs/editor/debugging
