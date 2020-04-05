@@ -113,8 +113,10 @@
         "no-proto": 2,
         "no-redeclare": 2,
         "no-script-url": 2,
-        "no-self-compare": 2,
+        "no-self-compare": 0,
         "no-sequences": 2,
+        "no-process-exit": 0,
+        "node/no-extraneous-require": 0,
         "no-unused-expressions": [
             2,
             {
