@@ -67,7 +67,6 @@
         "use-isnan": 2,
         "valid-typeof": 2,
         "no-unexpected-multiline": 0,
-        "no-process-exit": 0,
         // Best Practices
         "block-scoped-var": 2,
         "complexity": [
@@ -114,13 +113,13 @@
         "no-proto": 2,
         "no-redeclare": 2,
         "no-script-url": 2,
-        "no-self-compare": 0,
+        "no-self-compare": 2,
         "no-sequences": 2,
         "no-unused-expressions": [
             2,
             {
                 "allowShortCircuit": true,
-                "allowTernary": true
+                "allowTernary": false
             }
         ],
         "no-useless-call": 2,
