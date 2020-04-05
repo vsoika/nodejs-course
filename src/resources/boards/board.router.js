@@ -2,11 +2,16 @@ const router = require('express').Router();
 const Board = require('./board.model');
 const usersService = require('./board.service');
 const All_BOARDS = require('./board.memory.repository');
+const ALL_TASKS = require('../tasks/task.memory.repository');
 
 router.route('/').get(async (req, res) => {
   const boards = await usersService.getAll();
   // map user fields to exclude secret fields like "password"
-  res.json(boards.map(Board.toResponse));
+  if (boards.length) {
+    await res.json(boards.map(Board.toResponse));
+  } else {
+    res.status(404).send({ error: 'The boards not found' });
+  }
 });
 
 router.route('/').post(async (req, res) => {
@@ -22,7 +27,7 @@ router.route('/:id').get(async (req, res) => {
   if (board) {
     await res.json(Board.toResponse(board));
   } else {
-    await res.json(`The board with id ${id} doesn't exist`);
+    res.status(404).send({ error: `The board with id ${id} doesn't exist` });
   }
 });
 
@@ -39,9 +44,9 @@ router.route('/:id').put(async (req, res) => {
       }
     }
 
-    await res.json(`The user ${board.title} have been updated successfully`);
+    await res.json(`The board with id ${id} have been updated successfully`);
   } else {
-    await res.json(`The user with id ${id} doesn't exist`);
+    res.status(404).send({ error: `The board with id ${id} doesn't exist` });
   }
 });
 
@@ -49,16 +54,26 @@ router.route('/:id').delete(async (req, res) => {
   const id = req.params.id;
   const board = All_BOARDS.boards.find(item => item.id === id);
 
-  if (board) {
+  if (Object.keys(board).length) {
     All_BOARDS.boards.forEach((item, i) => {
       if (item.id === id) {
         All_BOARDS.boards.splice(i, 1);
       }
     });
 
-    await res.json(`The user ${board.title} have been deleted successfully`);
+    ALL_TASKS.tasks.forEach((item, i) => {
+      if (item.boardId === id) {
+        ALL_TASKS.tasks.splice(i, 1);
+      }
+    });
+
+    console.log(ALL_TASKS.tasks);
+
+    await res.json(`The board with id ${id} have been deleted successfully`);
   } else {
-    await res.json(`The user with id ${id} doesn't exist`);
+    await res
+      .status(404)
+      .send({ error: `The board with id ${id} doesn't exist` });
   }
 });
 

@@ -2,11 +2,12 @@ const router = require('express').Router();
 const User = require('./user.model');
 const usersService = require('./user.service');
 const All_USERS = require('./user.memory.repository');
+const ALL_TASKS = require('../tasks/task.memory.repository');
 
 router.route('/').get(async (req, res) => {
   const users = await usersService.getAll();
   // map user fields to exclude secret fields like "password"
-  res.json(users.map(User.toResponse));
+  await res.json(users.map(User.toResponse));
 });
 
 router.route('/').post(async (req, res) => {
@@ -22,7 +23,7 @@ router.route('/:id').get(async (req, res) => {
   if (user) {
     await res.json(User.toResponse(user));
   } else {
-    await res.json(`The user with id ${id} doesn't exist`);
+    res.status(404).send({ error: `The user with id ${id} doesn't exist` });
   }
 });
 
@@ -41,7 +42,7 @@ router.route('/:id').put(async (req, res) => {
 
     await res.json(`The user ${user.name} have been updated successfully`);
   } else {
-    await res.json(`The user with id ${id} doesn't exist`);
+    res.status(404).send({ error: `The user with id ${id} doesn't exist` });
   }
 });
 
@@ -53,12 +54,18 @@ router.route('/:id').delete(async (req, res) => {
     All_USERS.users.forEach((item, i) => {
       if (item.id === id) {
         All_USERS.users.splice(i, 1);
+
+        ALL_TASKS.tasks.forEach(task => {
+          if (task.userId === id) {
+            task.userId = null;
+          }
+        });
       }
     });
 
     await res.json(`The user ${user.name} have been deleted successfully`);
   } else {
-    await res.json(`The user with id ${id} doesn't exist`);
+    res.status(404).send({ error: `The user with id ${id} doesn't exist` });
   }
 });
 
