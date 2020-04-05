@@ -12,7 +12,6 @@ router.route('/').get(async (req, res) => {
 router.route('/').post(async (req, res) => {
   const newUser = new User(req.body);
   All_USERS.users.push(newUser);
-  console.log(All_USERS.users);
   await res.json(User.toResponse(newUser));
 });
 
